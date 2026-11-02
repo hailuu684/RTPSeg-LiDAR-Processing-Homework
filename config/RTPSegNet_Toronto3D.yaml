@@ -1,0 +1,146 @@
+# Config format schema number
+format_version: 1
+
+###################
+## Model options
+baseline_only: False
+infra_only: False
+image_only: True        # RGB + point cloud, no TIR
+image_and_infra: False
+model_3d: SPVCNN
+
+
+model_params:
+  model_architecture: "RTPSegNet"
+  input_dims: 4         # xyz + intensity
+  voxel_size: 0.05
+  cr: 1  # enlarge factor of layer_num
+  layer_num:
+    - 32
+    - 32
+    - 64
+    - 128
+    - 256
+    - 256
+    - 128
+    - 96
+    - 96
+
+
+  hiden_size_list:
+    - 256
+    - 128
+    - 96
+
+  spatial_shape:
+    - 1000
+    - 1000
+    - 60
+  scale_list:
+    - 2
+    - 4
+    - 8
+    - 16
+
+  hiden_size: 64
+
+  num_class: 8
+
+  # 2D branch: any timm DINO ViT. DINOv3 e.g. "vit_base_patch16_dinov3.lvd1689m" (needs timm>=1.0.20, gated HF weights)
+  backbone_2d: vit_base_patch14_reg4_dinov2.lvd142m
+  dino_layers:          # intermediate blocks mapped to img_scale2/4/8/16
+    - 2
+    - 5
+    - 8
+    - 11
+  dino_weights:         # optional local .safetensors/.bin for offline nodes; empty -> download from HF hub
+  freeze_2d: False      # DINO backbone is always frozen; this would also freeze the projection heads
+  pretrained2d: True
+  pretrained_load_path:
+
+
+###################
+## Dataset options
+dataset_params:
+  training_size:        # empty -> number of train frames
+  dataset_type: "RGBPC_dataset"
+  pc_dataset_type: "Toronto3D"
+  collate_type: "collate_fn_voxel_rgb"
+  ignore_label: 255     # val points scored in another (overlapping) frame
+
+  label_mapping: "./config/label_mapping/Toronto3D.yaml"
+  learning_map: False
+
+  toronto3d:
+    frame_radius: 25.0          # m, LiDAR-frame-like crop around the vehicle pose
+    train_pose_stride: 1        # poses are stored every 1 m along the trajectory
+    val_pose_stride: 10         # one val frame every 10 m; each point is scored only in its nearest frame
+    pose_jitter: [0.5, 1.0, 10.0]   # along (m), lateral (m), yaw (deg); train only, plus random 180 deg flip
+    cam_height: 2.0             # m above local ground
+    hfov: 90.0                  # deg
+    img_size: [896, 448]        # W, H of the rendered virtual image
+    splat_size: 0.06            # m, point footprint used for z-buffer splatting
+    max_splat_radius: 4         # px
+    depth_tol: [0.3, 0.03]      # abs (m), rel; point is visible if depth <= zbuffer * (1 + rel) + abs
+    hole_fill_iters: 2
+
+  # 2D augmentation
+  bottom_crop:          # random crop W, H; multiple of 14 (DINOv2) and 16 (DINOv3 / ResNet)
+    - 448
+    - 336
+  color_jitter:
+    - 0.4
+    - 0.4
+    - 0.4
+  flip2d: 0.5
+  image_normalizer:
+    - [0.485, 0.456, 0.406]
+    - [0.229, 0.224, 0.225]
+  max_volume_space:
+    - 30
+    - 30
+    - 80
+  min_volume_space:
+    - -30
+    - -30
+    - -5
+
+  train_data_loader:
+    data_path: "/data/user/luutunghai@gmail.com/dataset/point_clouds/Toronto3D/processed_grid0.05"
+    batch_size: 2
+    shuffle: True
+    num_workers: 1
+    rotate_aug: True
+    flip_aug: True
+    scale_aug: True
+    transform_aug: True
+    dropout_aug: True
+
+  val_data_loader:
+    data_path: "/data/user/luutunghai@gmail.com/dataset/point_clouds/Toronto3D/processed_grid0.05"
+    shuffle: False
+    num_workers: 1
+
+    # normal test
+    batch_size: 2
+    rotate_aug: False
+    flip_aug: False
+    scale_aug: False
+    transform_aug: False
+    dropout_aug: False
+
+
+###################
+## Train params
+train_params:
+  max_num_epochs: 200
+
+  learning_rate: 0.024
+  optimizer: SGD  # [SGD, Adam]
+  lr_scheduler: CosineAnnealingWarmRestarts  # per-step cosine (upstream naming) | CosineAnnealingLR | StepLR
+  momentum: 0.9
+  nesterov: True
+  weight_decay: 1.0e-4
+
+  lambda_seg2d: 1
+  lambda_xm: 0.05

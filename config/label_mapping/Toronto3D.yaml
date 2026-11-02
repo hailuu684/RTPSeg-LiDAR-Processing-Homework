@@ -1,0 +1,54 @@
+# Toronto-3D (Tan et al., CVPRW 2020). Label 0 (unclassified) is dropped by the loader, the rest are shifted by -1.
+labels:
+  0: "Unclassified"
+  1: "Road"
+  2: "Road marking"
+  3: "Natural"
+  4: "Building"
+  5: "Utility line"
+  6: "Pole"
+  7: "Car"
+  8: "Fence"
+
+learning_map:
+  0: 0
+  1: 1
+  2: 2
+  3: 3
+  4: 4
+  5: 5
+  6: 6
+  7: 7
+  8: 8
+
+learning_map_inv: # inverse of previous map
+  0: 0
+  1: 1
+  2: 2
+  3: 3
+  4: 4
+  5: 5
+  6: 6
+  7: 7
+  8: 8
+
+color_map: # bgr
+  0: [0, 0, 0]
+  1: [128, 128, 128]
+  2: [255, 255, 255]
+  3: [0, 175, 0]
+  4: [0, 120, 255]
+  5: [255, 255, 0]
+  6: [255, 0, 255]
+  7: [0, 0, 255]
+  8: [0, 200, 200]
+
+split: # tiles, standard protocol: L002 is the test tile
+  train:
+    - L001
+    - L003
+    - L004
+  valid:
+    - L002
+  test:
+    - L002

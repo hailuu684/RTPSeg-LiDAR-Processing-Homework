@@ -1,0 +1,21 @@
+*.npy
+
+# Checkpoints 
+checkpoints/
+*.pth
+*.pt
+*.onnx
+
+# Kết quả chạy thử nghiệm và visualize
+results/
+**/pred/
+vis_inputs/
+*.log
+
+# Môi trường ảo và cache của Python
+__pycache__/
+*.py[cod]
+.venv/
+env/
+.idea/
+.vscode/
